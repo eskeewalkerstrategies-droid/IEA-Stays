@@ -1,0 +1,74 @@
+---
+import Base from "../../layouts/Base.astro";
+const api = import.meta.env.PUBLIC_API_URL ?? "http://localhost:8080";
+const questions = [
+  { key: "business", label: "What does your business sell, and to whom?" },
+  { key: "alternative", label: "What do your customers do instead of buying from you?" },
+  { key: "why_you", label: "Why do customers who choose you, choose you? In their words if you can." },
+  { key: "price", label: "Are you priced above, at, or below the usual alternative? Why?" },
+  { key: "one_line", label: "Your current one-line description, the one on your website or profile." },
+];
+const consent =
+  "I agree that EskeeWalker Strategies may store these details and email me about my enquiry, with occasional notes on strategy and growth. I can withdraw at any time by replying or using the unsubscribe link.";
+---
+<Base title="Positioning Check" description="Answer five questions about your business and get a specific read on your positioning: what is clear, what is weak, and the one change to make first.">
+  <p class="eyebrow">Free tool</p>
+  <h1>Positioning Check.</h1>
+  <p class="lead">Five questions, honest answers. You get a specific read on screen and by email: what is clear, where it is weak, and the one change to make first.</p>
+
+  <form id="tool-form" data-api={api} novalidate>
+    {questions.map((q) => (
+      <>
+        <label for={q.key}>{q.label}</label>
+        <textarea id={q.key} name={q.key} required minlength="5"></textarea>
+      </>
+    ))}
+    <label for="name">Your name</label>
+    <input id="name" name="name" required minlength="2" />
+    <label for="email">Work email (the result goes here)</label>
+    <input id="email" name="email" type="email" required />
+    <label for="company">Company</label>
+    <input id="company" name="company" />
+    <div class="hp" aria-hidden="true"><label for="website">Website</label><input id="website" name="website" tabindex="-1" autocomplete="off" /></div>
+    <label class="consent"><input type="checkbox" name="email_consent" required /><span>{consent}</span></label>
+    <div class="notice">We store your answers and details to send the result and reply. Withdraw any time with the unsubscribe link. <a href="/privacy">Details</a>.</div>
+    <button type="submit">Get my read</button>
+    <p class="status" role="status" aria-live="polite"></p>
+  </form>
+  <div id="result" class="result" hidden></div>
+
+  <script>
+    const form = document.getElementById("tool-form") as HTMLFormElement;
+    const status = form.querySelector(".status") as HTMLElement;
+    const result = document.getElementById("result") as HTMLElement;
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+      const data = new FormData(form);
+      const answers: Record<string, string> = {};
+      for (const k of ["business", "alternative", "why_you", "price", "one_line"]) answers[k] = String(data.get(k) ?? "");
+      status.textContent = "Reading your answers…";
+      (form.querySelector("button") as HTMLButtonElement).disabled = true;
+      try {
+        const res = await fetch(`${form.dataset.api}/api/tools/positioning-check`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ name: data.get("name"), email: data.get("email"), company: data.get("company") || null, email_consent: data.get("email_consent") === "on", answers, website: data.get("website") || "" }),
+        });
+        const json = await res.json();
+        if (res.ok && json.ok) {
+          status.textContent = "Done. A copy is on its way to your inbox.";
+          result.textContent = json.result;
+          result.hidden = false;
+          result.scrollIntoView({ behavior: "smooth" });
+        } else {
+          status.textContent = json.error ?? "Something went wrong.";
+          (form.querySelector("button") as HTMLButtonElement).disabled = false;
+        }
+      } catch {
+        status.textContent = "Could not reach the server. Please try again in a minute.";
+        (form.querySelector("button") as HTMLButtonElement).disabled = false;
+      }
+    });
+  </script>
+</Base>

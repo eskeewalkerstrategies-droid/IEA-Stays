@@ -1,0 +1,22 @@
+---
+import Base from "../layouts/Base.astro";
+import { getCollection } from "astro:content";
+const articles = (await getCollection("articles", ({ data }) => !data.draft)).sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()).slice(0, 5);
+---
+<Base title="EskeeWalker Strategies" description="Business and brand strategy for founder-led companies in India: positioning, growth and practical AI adoption, with execution that survives the real world.">
+  <p class="eyebrow">Business and brand strategy, Jaipur</p>
+  <h1>Strategy that survives execution.</h1>
+  <p class="lead">We work with founders and directors on positioning, growth and AI adoption. Not theory. Decisions you can act on next week, with the commercial constraints built in.</p>
+  <div class="callout">
+    <strong>Start with a conversation.</strong> Tell us the problem in your own words and you will hear back within a working day. <a href="/contact">Write to us</a> or <a href="/tools/positioning-check">try the positioning check</a> first.
+  </div>
+  <h2>Recent articles</h2>
+  <ul class="list">
+    {articles.map((a) => (
+      <li>
+        <a href={`/articles/${a.id}`}>{a.data.title}</a>
+        <div class="meta">{a.data.pillar} · {a.data.pubDate.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</div>
+      </li>
+    ))}
+  </ul>
+</Base>

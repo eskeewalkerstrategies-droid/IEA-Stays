@@ -1,0 +1,18 @@
+---
+import Base from "../../layouts/Base.astro";
+import { getCollection } from "astro:content";
+const articles = (await getCollection("articles", ({ data }) => !data.draft)).sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+---
+<Base title="Articles: EskeeWalker Strategies" description="Researched articles on positioning, growth and practical AI for founder-led businesses in India. One a week, each with a real example.">
+  <p class="eyebrow">Articles</p>
+  <h1>One researched answer a week.</h1>
+  <ul class="list">
+    {articles.map((a) => (
+      <li>
+        <a href={`/articles/${a.id}`}>{a.data.title}</a>
+        <div class="meta">{a.data.pillar} · {a.data.pubDate.toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</div>
+        <p>{a.data.description}</p>
+      </li>
+    ))}
+  </ul>
+</Base>

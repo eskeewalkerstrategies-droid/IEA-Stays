@@ -1,0 +1,89 @@
+---
+/**
+ * The one lead form. Posts to the Ops backend, which creates the contact in the CRM, stores the consent
+ * wording shown here, and starts the intake. Keep the consent text in sync with LEAD_CONSENT_WORDING in
+ * backend/src/http/leads.ts; the backend stores whatever this form sends.
+ */
+interface Props {
+  source?: string;
+  toolUsed?: string;
+  needLabel?: string;
+}
+const { source = "website_form", toolUsed, needLabel = "What do you need help with?" } = Astro.props;
+const api = import.meta.env.PUBLIC_API_URL ?? "http://localhost:8080";
+const consent =
+  "I agree that EskeeWalker Strategies may store these details and email me about my enquiry, with occasional notes on strategy and growth. I can withdraw at any time by replying or using the unsubscribe link.";
+---
+<form id="lead-form" data-api={api} data-source={source} data-tool={toolUsed ?? ""} novalidate>
+  <label for="name">Your name</label>
+  <input id="name" name="name" required minlength="2" autocomplete="name" />
+
+  <label for="email">Work email</label>
+  <input id="email" name="email" type="email" required autocomplete="email" />
+
+  <label for="phone">Phone (optional)</label>
+  <input id="phone" name="phone" type="tel" autocomplete="tel" />
+
+  <label for="company">Company</label>
+  <input id="company" name="company" autocomplete="organization" />
+
+  <label for="need">{needLabel}</label>
+  <textarea id="need" name="need" required minlength="10" placeholder="Two or three sentences in your own words."></textarea>
+
+  <div class="hp" aria-hidden="true">
+    <label for="website">Website</label>
+    <input id="website" name="website" tabindex="-1" autocomplete="off" />
+  </div>
+
+  <label class="consent">
+    <input type="checkbox" name="email_consent" required />
+    <span>{consent}</span>
+  </label>
+
+  <div class="notice">
+    <strong>What we collect and why.</strong> Your name, email, phone and company, and what you wrote, so we can reply and keep track of the conversation. It is stored in our CRM in India. We do not sell or share it. Withdraw at any time by replying "unsubscribe" or with the link in any email. Full details on the <a href="/privacy">privacy page</a>.
+  </div>
+
+  <button type="submit">Send</button>
+  <p class="status" role="status" aria-live="polite"></p>
+</form>
+
+<script>
+  const form = document.getElementById("lead-form") as HTMLFormElement;
+  const status = form.querySelector(".status") as HTMLElement;
+  const startedAt = Date.now();
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    const data = new FormData(form);
+    const body = {
+      name: data.get("name"),
+      email: data.get("email"),
+      phone: data.get("phone") || null,
+      company: data.get("company") || null,
+      need: data.get("need") || null,
+      email_consent: data.get("email_consent") === "on",
+      consent_wording: (form.querySelector(".consent span") as HTMLElement).textContent?.trim(),
+      source: form.dataset.source,
+      tool_used: form.dataset.tool || null,
+      website: data.get("website") || "",
+      started_at: startedAt,
+    };
+    status.textContent = "Sending…";
+    (form.querySelector("button") as HTMLButtonElement).disabled = true;
+    try {
+      const res = await fetch(`${form.dataset.api}/api/leads`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      const json = await res.json();
+      if (res.ok && json.ok) {
+        form.reset();
+        status.innerHTML = `Thanks. You will get an email within a minute. If you would rather talk now, <a href="${json.booking_url}">book a 30-minute call</a>.`;
+      } else {
+        status.textContent = json.error ?? "Something went wrong. Please email us directly.";
+        (form.querySelector("button") as HTMLButtonElement).disabled = false;
+      }
+    } catch {
+      status.textContent = "Could not reach the server. Please email us directly.";
+      (form.querySelector("button") as HTMLButtonElement).disabled = false;
+    }
+  });
+</script>

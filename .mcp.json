@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "ops": {
+      "type": "http",
+      "url": "${OPS_MCP_URL:-https://api.ops.eskeewalkerstrategies.com/mcp}",
+      "headers": {
+        "Authorization": "Bearer ${OPS_MCP_TOKEN}"
+      }
+    }
+  }
+}

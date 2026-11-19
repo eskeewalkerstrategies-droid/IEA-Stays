@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EskeeWalker cut list",
+  "type": "object",
+  "required": ["source", "keep"],
+  "additionalProperties": false,
+  "properties": {
+    "source": {
+      "type": "object",
+      "required": ["file"],
+      "properties": {
+        "file": { "type": "string", "description": "Path to the silence-cut input video" },
+        "transcript_asset_id": { "type": "string", "format": "uuid" },
+        "language": { "type": "string", "enum": ["en", "hi", "hinglish"], "default": "en" }
+      }
+    },
+    "keep": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["start", "end"],
+        "properties": {
+          "start": { "type": "number", "minimum": 0 },
+          "end": { "type": "number", "exclusiveMinimum": 0 },
+          "label": { "type": "string" }
+        }
+      }
+    },
+    "titles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["at", "duration", "text", "style"],
+        "properties": {
+          "at": { "type": "number" },
+          "duration": { "type": "number" },
+          "text": { "type": "string", "maxLength": 80 },
+          "style": { "type": "string", "enum": ["title", "lower_third", "chapter"] }
+        }
+      }
+    },
+    "zooms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["at", "duration", "scale"],
+        "properties": { "at": { "type": "number" }, "duration": { "type": "number" }, "scale": { "type": "number", "minimum": 1, "maximum": 1.4 } }
+      }
+    },
+    "captions": {
+      "type": "object",
+      "properties": {
+        "style": { "type": "string", "enum": ["word", "line"], "default": "word" },
+        "font_size": { "type": "integer", "default": 64 },
+        "long_video": { "type": "boolean", "default": false }
+      }
+    },
+    "shorts": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": ["start", "end", "hook", "title"],
+        "properties": {
+          "start": { "type": "number" },
+          "end": { "type": "number" },
+          "hook": { "type": "string", "maxLength": 90 },
+          "title": { "type": "string", "maxLength": 100 }
+        }
+      }
+    },
+    "chapters": {
+      "type": "array",
+      "items": { "type": "object", "required": ["at", "title"], "properties": { "at": { "type": "number" }, "title": { "type": "string" } } }
+    },
+    "thumbnail": {
+      "type": "object",
+      "required": ["frame_at", "layout", "headline"],
+      "properties": {
+        "frame_at": { "type": "number" },
+        "layout": { "type": "string", "enum": ["a", "b", "c"] },
+        "headline": { "type": "string", "maxLength": 40 }
+      }
+    }
+  }
+}
